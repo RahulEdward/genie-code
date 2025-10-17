@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
+import { AgentBuilderPanel } from './agentBuilder';
 import { CodeSprintAgent } from './agents/codeSprint';
 import { AnthropicClient } from './anthropicClient';
-import { ChatPanel } from './chatPanel';
-import { AgentBuilderPanel } from './agentBuilder';
+import { ModernChatPanel } from './modernChatPanel';
 
 let codeSprintAgent: CodeSprintAgent;
 let anthropicClient: AnthropicClient;
@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('genie.openChat', () => {
-            ChatPanel.createOrShow(context.extensionUri, anthropicClient);
+            ModernChatPanel.createOrShow(context.extensionUri, anthropicClient);
         })
     );
 
@@ -213,4 +213,4 @@ async function provideInlineCompletions(document: vscode.TextDocument, position:
     return [];
 }
 
-export function deactivate() {}
+export function deactivate() { }
