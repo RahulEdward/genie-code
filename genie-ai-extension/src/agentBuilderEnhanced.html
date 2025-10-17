@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genie Agent Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+            height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 280px;
+            border-right: 1px solid var(--vscode-panel-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+
+        .sidebar-header h2 {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 8px 16px;
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .btn:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+
+        .btn-secondary {
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        .btn-secondary:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .agents-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .agent-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .agent-item:hover {
+            border-color: var(--vscode-focusBorder);
+        }
+
+        .agent-item.active {
+            background: var(--vscode-list-activeSelectionBackground);
+            border-color: var(--vscode-focusBorder);
+        }
+
+        .agent-item h3 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .agent-item p {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-header h1 {
+            font-size: 20px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .form-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Wizard Styles */
+        .wizard-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .wizard-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .wizard-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--vscode-input-border);
+            z-index: 0;
+        }
+
+        .wizard-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .wizard-step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--vscode-input-background);
+            border: 2px solid var(--vscode-input-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-weight: bold;
+        }
+
+        .wizard-step.active .wizard-step-circle {
+            background: var(--vscode-button-background);
+            border-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        .wizard-step.completed .wizard-step-circle {
+            background: var(--vscode-button-background);
+            border-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        .wizard-step-label {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .wizard-step.active .wizard-step-label {
+            color: var(--vscode-editor-foreground);
+            font-weight: 500;
+        }
+
+        .wizard-content {
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 8px;
+            padding: 32px;
+            min-height: 400px;
+        }
+
+        .wizard-page {
+            display: none;
+        }
+
+        .wizard-page.active {
+            display: block;
+        }
+
+        .wizard-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--vscode-focusBorder);
+        }
+
+        .form-group .help-text {
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: var(--vscode-input-background);
+            border: 2px solid var(--vscode-input-border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .radio-item:hover {
+            border-color: var(--vscode-focusBorder);
+        }
+
+        .radio-item input[type="radio"] {
+            margin-top: 2px;
+        }
+
+        .radio-item-content h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .radio-item-content p {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .template-card {
+            padding: 20px;
+            background: var(--vscode-input-background);
+            border: 2px solid var(--vscode-input-border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-card:hover {
+            border-color: var(--vscode-focusBorder);
+            transform: translateY(-2px);
+        }
+
+        .template-card-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .template-card h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .template-card p {
+            font-size: 13px;
+            color: var(--vscode-descriptionForeground);
+            line-height: 1.5;
+        }
+
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px;
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            min-height: 40px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tag-input {
+            flex: 1;
+            min-width: 120px;
+            border: none;
+            background: transparent;
+            color: var(--vscode-input-foreground);
+            outline: none;
+            font-size: 13px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+
+        .slider-value {
+            min-width: 40px;
+            text-align: right;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 48px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: var(--vscode-editor-foreground);
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .preview-box {
+            background: var(--vscode-textCodeBlock-background);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>My Agents</h2>
+            <button class="btn" onclick="startWizard()">🧙 Create with Wizard</button>
+            <button class="btn btn-secondary" onclick="createNewAgent()">+ Quick Create</button>
+            <button class="btn btn-secondary" onclick="importAgent()">📥 Import Agent</button>
+        </div>
+        <div class="agents-list" id="agentsList">
+            <!-- Agents will be populated here -->
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <h1 id="contentTitle">Agent Builder</h1>
+            <div class="header-actions" id="headerActions" style="display: none;">
+                <button class="btn btn-secondary" onclick="exportAgent()">📤 Export</button>
+                <button class="btn btn-secondary" onclick="testAgent()">🧪 Test</button>
+                <button class="btn btn-secondary" onclick="deleteAgent()">🗑️ Delete</button>
+                <button class="btn" onclick="saveAgent()">💾 Save</button>
+            </div>
+        </div>
+
+        <div class="form-container" id="formContainer">
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-state-icon">🤖</div>
+                <h2>Build Your Custom AI Agent</h2>
+                <p>Create specialized AI agents tailored to your coding workflow</p>
+
+                <div class="template-grid">
+                    <div class="template-card" onclick="useTemplate('react-component')">
+                        <div class="template-card-icon">⚛️</div>
+                        <h3>React Component Builder</h3>
+                        <p>Generates React components with TypeScript, hooks, and best practices</p>
+                    </div>
+                    <div class="template-card" onclick="useTemplate('api-endpoint')">
+                        <div class="template-card-icon">🔌</div>
+                        <h3>API Endpoint Generator</h3>
+                        <p>Creates RESTful API endpoints with validation and error handling</p>
+                    </div>
+                    <div class="template-card" onclick="useTemplate('database-optimizer')">
+                        <div class="template-card-icon">🗄️</div>
+                        <h3>Database Query Optimizer</h3>
+                        <p>Optimizes SQL queries for performance and efficiency</p>
+                    </div>
+                    <div class="template-card" onclick="useTemplate('security-reviewer')">
+                        <div class="template-card-icon">🔒</div>
+                        <h3>Security Code Reviewer</h3>
+                        <p>Identifies security vulnerabilities and suggests fixes</p>
+                    </div>
+                    <div class="template-card" onclick="useTemplate('performance-analyzer')">
+                        <div class="template-card-icon">⚡</div>
+                        <h3>Performance Analyzer</h3>
+                        <p>Analyzes code performance and suggests optimizations</p>
+                    </div>
+                    <div class="template-card" onclick="useTemplate('test-generator')">
+                        <div class="template-card-icon">🧪</div>
+                        <h3>Test Case Generator</h3>
+                        <p>Generates comprehensive unit and integration tests</p>
+                    </div>
+                    <div class="template-card" onclick="useTemplate('documentation-writer')">
+                        <div class="template-card-icon">📚</div>
+                        <h3>Documentation Writer</h3>
+                        <p>Creates detailed documentation and API references</p>
+                    </div>
+                    <div class="template-card" onclick="useTemplate('refactoring-specialist')">
+                        <div class="template-card-icon">♻️</div>
+                        <h3>Code Refactoring Specialist</h3>
+                        <p>Refactors code for better maintainability and design</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wizard Mode -->
+            <div class="wizard-container" id="wizardContainer" style="display: none;">
+                <div class="wizard-steps">
+                    <div class="wizard-step active" data-step="1">
+                        <div class="wizard-step-circle">1</div>
+                        <div class="wizard-step-label">Purpose</div>
+                    </div>
+                    <div class="wizard-step" data-step="2">
+                        <div class="wizard-step-circle">2</div>
+                        <div class="wizard-step-label">Technology</div>
+                    </div>
+                    <div class="wizard-step" data-step="3">
+                        <div class="wizard-step-circle">3</div>
+                        <div class="wizard-step-label">Behavior</div>
+                    </div>
+                    <div class="wizard-step" data-step="4">
+                        <div class="wizard-step-circle">4</div>
+                        <div class="wizard-step-label">Review</div>
+                    </div>
+                </div>
+
+                <div class="wizard-content">
+                    <!-- Step 1: Purpose -->
+                    <div class="wizard-page active" data-page="1">
+                        <h2 style="margin-bottom: 24px;">What will this agent do?</h2>
+
+                        <div class="form-group">
+                            <label for="wizardName">Agent Name *</label>
+                            <input type="text" id="wizardName" placeholder="e.g., React Component Builder">
+                            <div class="help-text">Give your agent a descriptive name</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wizardDescription">Description</label>
+                            <input type="text" id="wizardDescription" placeholder="Brief description of what this agent does">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Agent Purpose</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="wizardPurpose" value="code-generation">
+                                    <div class="radio-item-content">
+                                        <h4>Code Generation</h4>
+                                        <p>Creates new code from descriptions or requirements</p>
+                                    </div>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="wizardPurpose" value="code-review">
+                                    <div class="radio-item-content">
+                                        <h4>Code Review & Analysis</h4>
+                                        <p>Reviews existing code for quality, bugs, and improvements</p>
+                                    </div>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="wizardPurpose" value="refactoring">
+                                    <div class="radio-item-content">
+                                        <h4>Code Refactoring</h4>
+                                        <p>Improves code structure and maintainability</p>
+                                    </div>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="wizardPurpose" value="testing">
+                                    <div class="radio-item-content">
+                                        <h4>Testing & QA</h4>
+                                        <p>Generates tests and identifies quality issues</p>
+                                    </div>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="wizardPurpose" value="documentation">
+                                    <div class="radio-item-content">
+                                        <h4>Documentation</h4>
+                                        <p>Creates documentation, comments, and explanations</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Technology -->
+                    <div class="wizard-page" data-page="2">
+                        <h2 style="margin-bottom: 24px;">Technology Stack</h2>
+
+                        <div class="form-group">
+                            <label>Programming Languages</label>
+                            <div class="tag-input-container" id="languagesTags">
+                                <input type="text" class="tag-input" id="languagesInput" placeholder="Type and press Enter...">
+                            </div>
+                            <div class="help-text">Common: JavaScript, TypeScript, Python, Java, Go, Rust</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Frameworks & Libraries</label>
+                            <div class="tag-input-container" id="frameworksTags">
+                                <input type="text" class="tag-input" id="frameworksInput" placeholder="Type and press Enter...">
+                            </div>
+                            <div class="help-text">Common: React, Vue, Angular, Express, Django, Spring</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wizardExpertise">Expertise Level</label>
+                            <select id="wizardExpertise">
+                                <option value="beginner">Beginner - Simple, well-explained code</option>
+                                <option value="intermediate" selected>Intermediate - Balanced complexity</option>
+                                <option value="expert">Expert - Advanced patterns and optimizations</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Behavior -->
+                    <div class="wizard-page" data-page="3">
+                        <h2 style="margin-bottom: 24px;">Agent Behavior</h2>
+
+                        <div class="form-group">
+                            <label>Focus Area</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="wizardFocus" value="speed" checked>
+                                    <div class="radio-item-content">
+                                        <h4>⚡ Speed</h4>
+                                        <p>Quick, concise solutions with minimal explanation</p>
+                                    </div>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="wizardFocus" value="quality">
+                                    <div class="radio-item-content">
+                                        <h4>✨ Quality</h4>
+                                        <p>Production-ready code with best practices and error handling</p>
+                                    </div>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="wizardFocus" value="learning">
+                                    <div class="radio-item-content">
+                                        <h4>📚 Learning</h4>
+                                        <p>Detailed explanations and educational content</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wizardCodingStyle">Coding Style Preferences (Optional)</label>
+                            <textarea id="wizardCodingStyle" placeholder="e.g., Use functional programming, prefer composition over inheritance, follow Airbnb style guide..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wizardTemperature">Creativity Level</label>
+                            <div class="slider-container">
+                                <input type="range" id="wizardTemperature" min="0" max="1" step="0.1" value="0.7">
+                                <span class="slider-value" id="wizardTemperatureValue">0.7</span>
+                            </div>
+                            <div class="help-text">Lower = more focused, Higher = more creative</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Review -->
+                    <div class="wizard-page" data-page="4">
+                        <h2 style="margin-bottom: 24px;">Review & Generate</h2>
+
+                        <div class="form-group">
+                            <label>Generated System Prompt</label>
+                            <div class="preview-box" id="promptPreview">
+                                <!-- Generated prompt will appear here -->
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wizardSystemPrompt">Edit System Prompt (Optional)</label>
+                            <textarea id="wizardSystemPrompt" style="min-height: 200px;"></textarea>
+                            <div class="help-text">You can customize the generated prompt</div>
+                        </div>
+                    </div>
+
+                    <div class="wizard-navigation">
+                        <button class="btn btn-secondary" id="wizardPrev" onclick="previousStep()" style="display: none;">← Previous</button>
+                        <button class="btn" id="wizardNext" onclick="nextStep()">Next →</button>
+                        <button class="btn" id="wizardFinish" onclick="finishWizard()" style="display: none;">✓ Create Agent</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Create Form (existing form) -->
+            <form id="agentForm" style="display: none;">
+                <!-- Existing form fields... -->
+            </form>
+        </div>
+    </div>
+
+    <script src="agentBuilderScript.js"></script>
+</body>
+</html>

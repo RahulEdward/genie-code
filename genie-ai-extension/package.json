@@ -1,0 +1,141 @@
+{
+  "name": "genie-ai",
+  "displayName": "Genie AI",
+  "description": "AI-powered coding assistant with CodeSprint agent",
+  "version": "1.0.0",
+  "publisher": "genie",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "genie.openChat",
+        "title": "Genie: Open AI Chat",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "genie.openAgentBuilder",
+        "title": "Genie: Open Agent Builder",
+        "icon": "$(robot)"
+      },
+      {
+        "command": "genie.generateCode",
+        "title": "Genie: Generate Code"
+      },
+      {
+        "command": "genie.completeCode",
+        "title": "Genie: Complete Code"
+      },
+      {
+        "command": "genie.optimizeCode",
+        "title": "Genie: Optimize Code"
+      },
+      {
+        "command": "genie.fixErrors",
+        "title": "Genie: Fix Errors"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "genie.openChat",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l"
+      },
+      {
+        "command": "genie.openAgentBuilder",
+        "key": "ctrl+shift+b",
+        "mac": "cmd+shift+b"
+      },
+      {
+        "command": "genie.generateCode",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g"
+      },
+      {
+        "command": "genie.completeCode",
+        "key": "ctrl+space",
+        "mac": "cmd+space",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Genie AI",
+      "properties": {
+        "genie.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API Key for Claude"
+        },
+        "genie.model": {
+          "type": "string",
+          "default": "claude-3-5-sonnet-20241022",
+          "enum": [
+            "claude-3-5-sonnet-20241022",
+            "claude-3-opus-20240229",
+            "claude-3-haiku-20240307"
+          ],
+          "description": "Claude model to use"
+        },
+        "genie.maxTokens": {
+          "type": "number",
+          "default": 4096,
+          "description": "Maximum tokens for responses"
+        },
+        "genie.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Temperature for code generation"
+        },
+        "genie.customAgents": {
+          "type": "array",
+          "default": [],
+          "description": "Custom AI agents created in Agent Builder"
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "genie.openChat",
+          "when": "true"
+        },
+        {
+          "command": "genie.openAgentBuilder",
+          "when": "true"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "genie.openChat",
+          "group": "genie@1"
+        },
+        {
+          "command": "genie.generateCode",
+          "group": "genie@2"
+        },
+        {
+          "command": "genie.optimizeCode",
+          "group": "genie@3"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  }
+}
