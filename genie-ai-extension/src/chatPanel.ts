@@ -700,25 +700,29 @@ When user asks for code, always:
         }
 
         function formatMessage(content) {
-            // Simple markdown-like formatting
-            content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-            content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
-            content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-            content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-            content = content.replace(/\n/g, '<br>');
+            var codeBlockRegex = /\`\`\`(\\w+)?\\n([\\s\\S]*?)\`\`\`/g;
+            var inlineCodeRegex = /\`([^\`]+)\`/g;
+            var boldRegex = /\\*\\*([^*]+)\\*\\*/g;
+            var italicRegex = /\\*([^*]+)\\*/g;
+            
+            content = content.replace(codeBlockRegex, '<pre><code>$2</code></pre>');
+            content = content.replace(inlineCodeRegex, '<code>$1</code>');
+            content = content.replace(boldRegex, '<strong>$1</strong>');
+            content = content.replace(italicRegex, '<em>$1</em>');
+            content = content.replace(/\\n/g, '<br>');
             return content;
         }
 
         function clearMessages() {
             const messages = chatContainer.querySelectorAll('.message');
-            messages.forEach(msg => msg.remove());
+            messages.forEach(function(msg) { msg.remove(); });
             emptyState.style.display = 'flex';
         }
 
         function scrollToBottom() {
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-    </script>
+    <\/script>
 </body>
 </html>`;
     }
